@@ -1,0 +1,163 @@
+assessor_data
+
+Description
+===========
+A dataset containing assessed values for property in the City of Madison.
+
+Usage
+=====
+assessor_data
+
+Format
+======
+a data frame with 79,022 rows and 147 variables
+
+Variables
+=========
+1	ï..OBJECTID		integer
+2	Parcel			numeric
+3	XRefParcel		numeric
+4	Address			factor
+5	DateParcelChanged	factor
+6	PropertyClass		factor
+7	PropertyUse		factor
+8	AssessmentArea		integer
+9	AreaName		factor
+10	MoreThanOneBuild	factor
+11	HomeStyle		logical
+12	DwellingUnits		integer
+13	Stories			numeric
+14	YearBuilt		integer
+15	Bedrooms		integer
+16	FullBaths		integer
+17	HalfBaths		integer
+18	TotalLivingArea		integer
+19	FirstFloor		integer
+20	SecondFloor		integer
+21	ThirdFloor		integer
+22	AboveThirdFloor		integer
+23	FinishedAttic		integer
+24	Basement		integer
+25	FinishedBasement	integer
+26	ExteriorWall1		factor
+27	ExteriorWall2		factor
+28	Fireplaces		integer
+29	CentralAir		factor
+30	PartialAssessed		logical
+31	AssessedByState		factor
+32	CurrentLand		integer
+33	CurrentImpr		integer
+34	CurrentTotal		integer
+35	PreviousLand		integer
+36	PreviousImpr		integer
+37	PreviousTotal		integer
+38	NetTaxes		numeric
+39	SpecialAssmnt		numeric
+40	OtherCharges		numeric
+41	TotalTaxes		numeric
+42	LotSize			numeric
+43	Zoning1			factor
+44	Zoning2			factor
+45	Zoning3			factor
+46	Zoning4			factor
+47	FrontageFeet		numeric
+48	FrontageStreet		factor
+49	WaterFrontage		factor
+50	TIFDistrict		integer
+51	TaxSchoolDist		logical
+52	AttendanceSchool	factor
+53	ElementarySchool	factor
+54	MiddleSchool		factor
+55	HighSchool		factor
+56	Ward			integer
+57	StateAssemblyDistrict	integer
+58	RefuseDistrict		factor
+59	RefuseURL		factor
+60	PreviousLand2		integer
+61	PreviousImpr2		integer
+62	PreviousTotal2		integer
+63	AlderDistrict		integer
+64	AssessmentChangeDate	factor
+65	BlockNumber		integer
+66	BuildingDistrict	integer
+67	CapitolFireDistrict	factor
+68	CensusTract		numeric
+69	ConditionalUse		integer
+70	CouncilHold		integer
+71	DateAdded		factor
+72	DeedPage		integer
+73	DeedRestriction		integer
+74	DeedVolume		integer
+75	ElectricalDistrict	integer
+76	EnvHealthDistrict	integer
+77	ExemptionType		factor
+78	FireDistrict		integer
+79	FloodPlain		integer
+80	FuelStorageProximity	integer
+81	HeatingDistrict		integer
+82	Holds			factor
+83	IllegalLandDivision	integer
+84	LandfillProximity	integer
+85	LandfillRemediation	factor
+86	Landmark		factor
+87	LandscapeBuffer		integer
+88	LocalHistoricalDist	factor
+89	LotDepth		numeric
+90	LotNumber		integer
+91	LotteryCredit		integer
+92	LotType1		factor
+93	LotType2		factor
+94	LotWidth		numeric
+95	MCDCode			factor
+96	NationalHistoricalDist	integer
+97	NeighborhoodDesc	factor
+98	NeighborhoodPrimary	factor
+99	NeighborhoodSub		factor
+100	NeighborhoodVuln	factor
+101	NoiseAirport		integer
+102	NoiseRailroad		integer
+103	NoiseStreet		integer
+104	ObsoleteDate		logical
+105	OwnerChangeDate		factor
+106	OwnerOccupied		factor
+107	ParcelChangeDate	factor
+108	ParcelCode		factor
+109	ParkProximity		integer
+110	Pending			logical
+111	PlanningDistrict	factor
+112	PlumbingDistrict	integer
+113	PoliceDistrict		factor
+114	PoliceSector		integer
+115	PreviousClass		factor
+116	PropertyUseCode		integer
+117	RailroadFrontage	factor
+118	ReasonChangeImpr	logical
+119	ReasonChangeLand	factor
+120	SenateDistrict		integer
+121	SupervisorDistrict	integer
+122	TifImpr			integer
+123	TifLand			integer
+124	TifYear			integer
+125	TotalDwellingUnits	integer
+126	TrafficAnalysisZone	integer
+127	TypeWaterFrontage	factor
+128	UWPolice		factor
+129	WetlandInfo		factor
+130	ZoningAll		factor
+131	ZoningBoardAppeal	integer
+132	UrbanDesignDistrict	factor
+133	HouseNbr		integer
+134	StreetDir		factor
+135	StreetName		factor
+136	StreetType		factor
+137	Unit			factor
+138	StreetID		integer
+139	StormOutfall		factor
+140	FireDemandZone		integer
+141	FireDemandSubZone	integer
+142	PropertyChangeDate	factor
+143	MaxConstructionYear	integer
+144	XCoord			numeric
+145	YCoord			numeric
+146	SHAPESTArea		numeric
+147	SHAPESTLength		numeric

@@ -1,0 +1,972 @@
+#Exploratory Data Analysis: 
+
+#2017 Assessed Value of Residential Property in Madison, WI
+
+##by Senay Goitom
+
+==========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(dplyr)
+library(scales)
+library(tidyr)
+library(GGally)
+library(RColorBrewer)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Load_the_Data}
+# Load the Data
+assessor_data <- read.csv("Tax_Parcels_Assessor_Property_Information.csv")
+
+# Define functions that will be used in plots
+reg_bar <- function(df, xvar, old_plot) {
+  rm(old_plot)
+  out_plot <- ggplot(data = df, aes_string(x = xvar)) + 
+    geom_bar() + 
+    ggtitle(xvar)
+  return(out_plot)
+}
+reg_hist <- function(df, xvar, old_plot) {
+  rm(old_plot)
+  out_plot <- ggplot(data = df, aes_string(x = xvar)) + 
+    geom_histogram(bins = 100,
+                   fill = I('#F79420')
+                   ) + 
+    ggtitle(xvar)
+  return(out_plot)
+}
+log_hist <- function(df, xvar, old_plot) {
+  rm(old_plot)
+  out_plot <- ggplot(data = df, aes_string(x = xvar)) + 
+    geom_histogram(bins = 100,
+                   fill = I('#F79420')
+                   ) + 
+    scale_x_log10() + 
+    ggtitle(paste(xvar, "(log10)", sep = " ", collapse = NULL))
+  return(out_plot)
+
+}
+```
+
+##Univariate Plots Section
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots1}
+colnames(assessor_data)
+sapply(assessor_data,class)
+str(assessor_data)
+# Plotting feature of interest from raw data
+plot1<-reg_hist(assessor_data, 'CurrentTotal', plot1)
+plot2<-log_hist(assessor_data, 'CurrentTotal', plot2)
+grid.arrange(plot1, plot2)
+summary(assessor_data$CurrentTotal)
+```
+### Univariate Plots 1 & 2
+The plots and summary above show the distribution of the feature of interest, CurrentTotal. This variable represents the total assessed value of a property (Land+Improvements). As the first histogram shows, the distribution is highly 
+skewed, with a cluster of values around zero, and a max value of $97,320,000.
+A log transformation reveals a distribution with a peak around $200,000.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots2}
+# Plotting potential explanatory feature 1 from raw data
+plot3<- reg_bar(assessor_data, 'PropertyUse', plot3)
+as.data.frame(summary(assessor_data$PropertyUse))
+chk <-   
+  assessor_data %>%
+  group_by(PropertyUse) %>%
+  filter(n() > 1000)
+plot4<-reg_bar(chk, 'PropertyUse', plot4)
+grid.arrange(plot3, plot4)
+```
+
+### Univariate Plots 3 & 4
+These plots explore the first explanatory feature of interest, PropertyUse. 
+As the summary of PropertyUse shows, there are one hundred categories. I am 
+interested in single-family/condominiums, which are the top two categories. 
+The first histogram, which includes all values, is difficult to read. The second
+which plots only those with frequencies of more than 1000, visually summarizes
+the frequencies of the top four categories.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots3}
+# Plotting potential explanatory feature 2 from raw data
+plot5<-reg_hist(assessor_data, 'TotalLivingArea')
+summary(assessor_data$TotalLivingArea)
+chk<-subset(assessor_data, (PropertyUse == "Single family" |
+                       PropertyUse ==  "Condominium"))
+plot6<-reg_hist(chk, 'TotalLivingArea')
+summary(chk$TotalLivingArea)
+plot7<-reg_hist(subset(chk, TotalLivingArea>0), 'TotalLivingArea')
+summary(subset(chk, TotalLivingArea>0)$TotalLivingArea)
+grid.arrange(plot5)
+grid.arrange(plot6, plot7)
+```
+
+### Univariate Plots 5, 6, 7
+The histograms above show the distribution of TotalLivingArea. In the full raw 
+dataset there are a large number of zeros, these are largely eliminated after 
+subsetting the data to single family/condominiums.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots4}
+# Plotting potential explanatory feature 3 from raw data
+plot8<-reg_hist(assessor_data, 'LotSize')
+summary(assessor_data$LotSize)
+plot9<-log_hist(assessor_data, 'LotSize')
+grid.arrange(plot8, plot9)
+```
+
+### Univariate Plots 8, 9
+The LotSize feature, which corresponds to the area of the property lot in 
+square feet, is heavily skewed right.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots5}
+# Plotting potential explanatory feature 4 from raw data
+plot10 <- reg_hist(assessor_data, 'Bedrooms', plot10)
+summary(assessor_data$Bedrooms)
+plot11 <-
+  qplot(x = Bedrooms, 
+        data = assessor_data,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(0, 8, 1), lim = c(0,8)) + 
+    ggtitle('Bedrooms')
+grid.arrange(plot10, plot11)
+```
+
+### Univariate Plots 10, 11
+The plots for Bedrooms is also skewed right with the interquartile range falling
+between 2 and 3 bedrooms. Restricting the range of the histogram better shows
+this distribution.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots6}
+# Plotting potential explanatory feature 5 from raw data
+plot12 <- reg_hist(assessor_data, 'FullBaths', plot12)
+summary(assessor_data$FullBaths)
+plot13 <-
+  qplot(x = FullBaths, 
+        data = assessor_data,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(0, 8, 1), lim = c(0,8)) + 
+    ggtitle('FullBaths')
+grid.arrange(plot12, plot13)
+```
+
+### Univariate Plots 12, 13
+The distribution of bathrooms is also highly skewed right. The interquartile
+range is between 1 and 2 full bathrooms.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots7}
+plot14<-reg_hist(assessor_data, 'HalfBaths', plot14)
+plot15 <-
+  qplot(x = HalfBaths, 
+        data = assessor_data,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(0, 8, 1), lim = c(0,8)) + 
+    ggtitle('HalfBaths')
+grid.arrange(plot14, plot15)
+```
+
+### Univariate Plots 14, 15
+The histograms for HalfBaths indicate that this feature lacks variability as 
+well, except for some outliers.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots8}
+plot16 <- reg_hist(assessor_data, 'YearBuilt', plot16)
+summary(assessor_data$YearBuilt)
+plot17 <-
+  qplot(x = YearBuilt, 
+        data = assessor_data,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(1837, 2017, 10), lim = c(1837, 2017)) + 
+    ggtitle('YearBuilt')
+
+grid.arrange(plot16, plot17)
+```
+
+### Univariate Plots 16, 17
+The first plot of the raw data shows that there are over 15000 observations 
+with YearBuilt = 0. Setting the minimum value of 1837, and adding tick marks
+at every 10 years, shows more clearly the distribution of YearBuilt. Of note is
+the presence of housing booms and busts across time, most clearly seen in the
+run up to the housing crisis of 2008, followed by the great recession.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots9}
+plot18 <- 
+  qplot(x = ElementarySchool, 
+        data = assessor_data,
+        fill = I('#F79420')) + 
+    ggtitle('ElementarySchool') + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+summary(assessor_data$ElementarySchool)
+grid.arrange((plot18))
+```
+
+### Univariate Plots 18
+This plot shows the number of observation by elementary school. Of note is the 
+large number of observations that are not assigned to any school. Investigation
+showed that in many cases, these were for homes located in Madison, but falling
+in the school districts of adjacent communities.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Data_Cleaning}
+single_fam<-subset(assessor_data, (PropertyUse == "Single family" |
+                       PropertyUse ==  "Condominium") & (YearBuilt!=0))
+single_fam$HomeAge<-2018-single_fam$YearBuilt
+single_fam$ElementarySchool<-as.character(single_fam$ElementarySchool)
+single_fam$MiddleSchool<-as.character(single_fam$MiddleSchool)
+single_fam$HighSchool<-as.character(single_fam$HighSchool)
+single_fam$PropertyUse<-as.character(single_fam$PropertyUse)
+single_fam$AttendanceSchool<-as.character(single_fam$AttendanceSchool)
+
+single_fam$ElementarySchool <- ifelse(test = single_fam$ElementarySchool != "",
+                                      yes = single_fam$ElementarySchool, 
+                                      no = single_fam$AttendanceSchool
+                                      )
+single_fam$MiddleSchool <- ifelse(test = single_fam$MiddleSchool != "",
+                                      yes = single_fam$MiddleSchool, 
+                                      no = single_fam$AttendanceSchool
+                                      ) 
+single_fam$HighSchool <- ifelse(test = single_fam$HighSchool != "",
+                                      yes = single_fam$HighSchool, 
+                                      no = single_fam$AttendanceSchool
+                                      ) 
+single_fam$ElementarySchool<-as.factor(single_fam$ElementarySchool)
+single_fam$MiddleSchool<-as.factor(single_fam$MiddleSchool)
+single_fam$HighSchool<-as.factor(single_fam$HighSchool)
+single_fam$AttendanceSchool<-as.factor(single_fam$AttendanceSchool)
+```
+
+### Data Cleaning
+Initial plots and tables show that in order to realistically analyze the
+effect of property features on assessed value, we need to subset the data, 
+removing commercial and large multi-family properties. In addition, the large 
+number of missing values for Elementary/Middle/High school need to be filled
+with the "AttendenceSchool" value where possible.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots10}
+#Investigate feature of interest, cleaned data
+plot19<-reg_hist(single_fam, 'CurrentTotal', plot19)
+summary(single_fam$CurrentTotal)
+plot20<-log_hist(single_fam, 'CurrentTotal', plot20)
+grid.arrange(plot19, plot20)
+```
+
+### Univariate Plots 19, 20
+Compared to the the raw data, the plots above, which are drawn from data that
+was subsetted to include only single family/condominium properties, shows a 
+much tighter, right skewed, distribution
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots11}
+#Investigate explanatory feature 1, cleaned data
+plot21<-reg_hist(single_fam, 'TotalLivingArea', plot21)
+summary(single_fam$TotalLivingArea)
+plot22<-log_hist(single_fam, 'TotalLivingArea', plot22)
+grid.arrange(plot21, plot22)
+```
+
+### Univariate Plots 21, 22
+In previous iterations of this plot, I subset to excluded TotalLivingArea=0.
+This plot therefore does not show much change from plots 6, 7 above.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots12}
+#Investigate explanatory feature 2, cleaned data
+plot23<-reg_hist(single_fam, 'LotSize', plot23)
+summary(single_fam$LotSize)
+plot24<-log_hist(single_fam, 'LotSize', plot24)
+grid.arrange(plot23, plot24)
+```
+
+### Univariate Plots 23, 24
+Restricting the dataset to Single Family Homes/Condominiums results in a less
+right skewed distribution.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots13}
+#Investigate explanatory feature 3, cleaned data
+summary(single_fam$Bedrooms)
+plot25 <-
+  qplot(x = Bedrooms, 
+        data = single_fam,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(0, 12, 1), lim = c(0,12)) + 
+    ggtitle('Bedrooms')
+summary(single_fam$FullBaths)
+plot26 <-
+  qplot(x = FullBaths, 
+        data = single_fam,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(0, 8, 1), lim = c(0,8)) + 
+    ggtitle('FullBaths')
+summary(single_fam$HalfBaths)
+plot27 <-
+  qplot(x = HalfBaths, 
+        data = single_fam,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(0, 4, 1), lim = c(0,4)) + 
+    ggtitle('HalfBaths')
+
+grid.arrange(plot25, plot26, plot27)
+```
+
+### Univariate Plots 25, 26, 27
+Restricting the dataset to Single Family Homes/Condominiums results in the 
+removal of outliers such as the observation with 720 bedrooms.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots14}
+plot28 <-
+  qplot(x = YearBuilt, 
+        data = single_fam,
+        binwidth = 1, 
+        fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(1837, 2017, 10), lim = c(1837, 2017)) + 
+    ggtitle('YearBuilt')
+summary(single_fam$YearBuilt)
+grid.arrange(plot28)
+```
+
+### Univariate Plots 28
+This plot confirms that using the limits set in plot 17 result in a similar 
+distribution on the subsetted data.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots15}
+plot29 <- 
+  qplot(x = ElementarySchool, 
+        data = single_fam,
+        fill = I('#F79420')) + 
+    ggtitle('ElementarySchool') + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+summary(single_fam$ElementarySchool)
+grid.arrange(plot29)
+```
+
+### Univariate Plots 29
+In addition to subsetting the data, I addressed the issue of missing schools, 
+since location (as indicated by attendence school) is an explanatory feature 
+of interest in this analysis. This plot reflects the updated value for 
+"ElementarySchool".  
+
+##Univariate Analysis
+
+### What is the structure of your dataset?
+The Dataset has 79,022 observations, and 147 variables. It contains detailed 
+information about the assessed properties as well as the assessed values for 
+the current and previous years. For this analysis, I restricted the 
+'PropertyUse' variable to 'Single Family', or 'Condominium'.
+
+### What is/are the main feature(s) of interest in your dataset?
+The main features of interest are the assessed values for land and 
+improvements, for the current and previous years: "CurrentLand", "CurrentImpr", 
+"CurrentTotal", "PreviousLand", "PreviousImpr", "PreviousTotal". For the
+purpose of this particular analysis, I focus on "CurrentTotal".
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+I think that "LotSize", "TotalLivingArea", "PropertyUse", "Bedrooms", 
+"FullBaths", "HalfBaths", and "YearBuilt" will support the investigation into 
+assessed property value. Location is also important, but I will have to 
+investigate to see which of the following location variables best predicts 
+assessed value: "ElementarySchool", "MiddleSchool", "HighSchool", "Ward", 
+"StateAssemblyDistrict", "AlderDistrict", "CensusTract".
+
+### Did you create any new variables from existing variables in the dataset?
+Yes. To generate a smoother distribution of prices, I did a log transformation. 
+I also create a new variable called "HomeAge" by subtracting the value for 
+"YearBuilt" (and adding 1) from the current year (for the assessment, this 
+would be 2017).
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+In the raw data, Total Living Area has a sizeable number of zeros. There appear 
+to be parcels that correspond to parking/storage for condos. To simplify 
+the analysis, these are dropped.
+
+
+##Bivariate Plots Section
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots1}
+theme_set(theme_minimal(8))
+set.seed(1865)
+single_fam_subset<-single_fam[,c('CurrentTotal',
+                                 'PropertyUse',
+                                 'YearBuilt',
+                                 'TotalLivingArea',
+                                 'Bedrooms',
+                                 'FullBaths',
+                                 'ElementarySchool',
+                                 'MiddleSchool',
+                                 'HighSchool'
+                                 )
+                              ]
+```
+
+```{r ggpairs, echo=FALSE, fig.height=20, fig.width=20, message=FALSE, warning=FALSE}
+
+ggpairs(single_fam_subset[sample.int(nrow(single_fam_subset),10000), ], 
+        cardinality_threshold = 40) + 
+  theme(axis.ticks = element_blank(), axis.text = element_blank())
+str(single_fam_subset)
+```
+
+### Bivariate Plots 1
+The ggpairs plot above summarizes the relationships between the features of
+interst in this dataset. In particular, we see a relatively strong positive
+correlation between TotalLivingArea and CurrentTotal, and to a lesser extent
+a correlation between the number of full baths and the CurrentTotal.
+
+# Feature of Interest by other features
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots2}
+qplot(x = CurrentTotal
+      , data = single_fam
+      , bins = 100
+      , log='x'
+      ) +
+  facet_wrap(~PropertyUse, ncol = 2)
+```
+
+### Bivariate Plots 2
+The plot above shows that the mean assessed value for single family homes is
+slightly greater than the mean assessed value for condominiums. Moreover, the 
+upper tail of the distribution for single family homes appears to be longer 
+than that of condominiums. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots3}
+# Other features
+qplot(x = LotSize
+      , data = single_fam
+      , bins = 100
+      , log='x'
+      ) +
+  facet_wrap(~PropertyUse, ncol = 2)
+```
+
+### Bivariate Plots 3
+The plot above shows that, as is to be expected, condominiums do not have 
+values for LotSize. The bulk of the distribution of LotSize for Single Family 
+Homes lies between 1,000 and 10,000 square feet.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots4}
+qplot(x = TotalLivingArea
+      , data = single_fam
+      , bins = 100
+      , log='x'
+      ) +
+  facet_wrap(~PropertyUse, ncol = 2)
+```
+
+### Bivariate Plots 4
+As is to be expected, the plot above shows that the distribution of 
+TotalLivingArea is wider for Single Family Homes than for condominiums.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots5}
+ggplot(aes(factor(PropertyUse), 
+            TotalLivingArea), 
+        data = single_fam) +
+  geom_jitter( alpha = .3)  +
+  geom_boxplot( alpha = .5,color = 'blue')+
+  stat_summary(fun.y = "mean", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)
+ggplot(aes(factor(PropertyUse), 
+            TotalLivingArea), 
+        data = single_fam) +
+  geom_jitter( alpha = .3)  +
+  geom_boxplot( alpha = .5,color = 'blue')+
+  scale_y_log10()+
+  stat_summary(fun.y = "mean", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)
+```
+
+### Bivariate Plots 5
+The box plots above show that in addition to the wider distribution for 
+Single Family Homes, condominiums have a lower median TotalLivingArea, which
+is intuitive.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots6}
+qplot(x = YearBuilt
+      , data = single_fam
+      ,  binwidth = 10
+      ,  fill = I('#F79420')) + 
+  scale_x_continuous(breaks = seq(1837, 2017, 20), lim = c(1837, 2017)) + 
+    ggtitle('YearBuilt') +
+  facet_wrap(~PropertyUse, ncol = 2)
+```
+
+### Bivariate Plots 6
+The histogram above shows that, as one might expect, the housing stock of 
+Single family homes is older than condominiums. The few condominiums that have
+YearBuilt values in the late 19th century early 20th century, were likely 
+historic buildings (e.g. hotels) that were converted to condominiums recently. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots7}
+
+ggplot(aes(factor(PropertyUse), 
+            CurrentTotal), 
+        data = single_fam) +
+  geom_jitter( alpha = .3)  +
+  geom_boxplot( alpha = .5,color = 'blue')+
+  scale_y_log10()+
+  stat_summary(fun.y = "mean", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)
+```
+
+### Bivariate Plots 7
+These box plots show that the distribution of assessed value for single family
+homes contains both more outliers, and a tighter inter-quartile range. Moreover,
+as the histogram above indicated, the median and mean values for single family 
+homes are greater than for condominiums.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots8}
+ggplot(aes(factor(PropertyUse), 
+            CurrentLand), 
+        data = single_fam) +
+  geom_jitter( alpha = .3)  +
+  geom_boxplot( alpha = .5,color = 'blue')+
+  scale_y_log10()+
+  stat_summary(fun.y = "mean", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)
+```
+
+### Bivariate Plots 8
+The above box plots show that for single family homes the median and mean 
+land value is greater than for condominiums. Interestingly the interquartile 
+range is greater for condominiums.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots9}
+ggplot(aes(factor(PropertyUse), 
+            CurrentImpr), 
+        data = single_fam) +
+  geom_jitter( alpha = .3)  +
+  geom_boxplot( alpha = .5,color = 'blue')+
+  scale_y_log10()+
+  stat_summary(fun.y = "mean", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)
+```
+
+### Bivariate Plots 9
+The box plots above show that the mean and median values for the assessed 
+values of single family and condominium structures are much closer. Again,
+we see that the interquartile range for condominiums is much greater.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots10}
+qplot(x = TotalLivingArea
+      , data = single_fam
+      , bins = 100
+      , log='x'
+      ) +
+  facet_wrap(~ElementarySchool, ncol = 5)
+```
+
+### Bivariate Plots 10
+The histogram above shows how the range of total living area varies by
+elementary school. It also indicates which elementary schools have a greater
+number of single family homes and condominiums.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots11}
+qplot(x = TotalLivingArea
+      , data = subset(single_fam, as.integer(Bedrooms)<=6)
+      , bins = 100
+      , log='x'
+      ) +
+  ggtitle('Total Living Area by Number of Bathrooms') +
+  facet_wrap(~Bedrooms, ncol = 2)
+```
+
+### Bivariate Plots 11
+The histogram above shows that, as one would expect, the central tendency of
+total living area increases with the number of bedrooms.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots12}
+ggplot(aes(x = YearBuilt, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420'))
+cor(single_fam$YearBuilt, single_fam$CurrentTotal)
+```
+
+### Bivariate Plots 12
+The above plot and correlation coefficient (-0.043) show that there appears to
+be no relationship between when a house was built and its total assessed value.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots13}
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420'))
+cor(single_fam$TotalLivingArea, single_fam$CurrentTotal)
+```
+
+### Bivariate Plots 13
+The plot and correlation coefficient above (0.742) indicate that there is a 
+relatively strong positive relationship between the total living area of a home
+and its total assessed value.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots14}
+ggplot(aes(x = LotSize, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420'))
+cor(single_fam$LotSize, single_fam$CurrentTotal)
+single_fam %>%
+group_by(PropertyUse)%>%
+summarize(COR=cor(LotSize, CurrentTotal))
+```
+
+### Bivariate Plots 14
+There appears not to be a strong relationship between lot size and assessed 
+value. However, this is likely due to the fact that many condominiums do not
+have lot sizes, or lot sizes of zero. Filtering out condos may 
+reveal a stronger relationship for single family homes.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots15}
+ggplot(aes(x = LotSize, y = CurrentTotal), 
+       data = subset(single_fam, PropertyUse == "Single family")) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  ggtitle('Single Family Homes Only')
+ggplot(aes(x = LotSize, y = CurrentTotal), 
+       data = subset(single_fam, PropertyUse == "Condominium")) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  ggtitle('Condominiums Only')
+
+single_fam %>%
+group_by(PropertyUse)%>%
+summarize(COR=cor(LotSize, CurrentTotal))
+```
+
+### Bivariate Plots 15
+Subsetting this to single family homes only appears to weaken the correlation
+between lot size and total assessed value.
+
+##Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+The most important explanatory feature that I wanted to examine was PropertyUse.
+It is reasonable to believe that condominiums and single family detached homes 
+("SFDHs") represent qualitatively different markets. As such, I investigated how 
+the distribution of other features of interest varied across these groups. 
+The most noteworthy finding was that for the vast majority of condominiums, 
+LotSize=0. This has important implications for the inclusion of LotSize in any 
+regression, since it strongly covaries with PropertyUse. The  distribution of 
+the main feature CurrentTotal was wider for condominiums than for SFDHs. When I 
+looked at the distribution of the components of CurrentTotal 
+(CurrentLand and CurrentImpr), both of these appeared to have larger spreads for 
+condominiums than for SFDHs.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+There is a relationship between the number of bedrooms and the TotalLiving Area.
+
+### What was the strongest relationship you found?
+Total Living Area and CurrentTotal.
+
+# Multivariate Plots Section
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots1}
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  facet_wrap(~PropertyUse)
+
+single_fam %>%
+group_by(PropertyUse)%>%
+summarize(COR=cor(TotalLivingArea, CurrentTotal))
+```
+
+### Multivariate Plots 1
+The positive correlation betweeen total living area and total assessed value is 
+stronger for Single family homes than for condominiums.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots2}
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm", size=.1) + 
+  facet_wrap(~ElementarySchool, ncol=5)
+single_fam %>%
+group_by(ElementarySchool)%>%
+summarize(COR=cor(TotalLivingArea, CurrentTotal))
+```
+
+### Multivariate Plots 2
+The correlations between living area and assessed value vary considerably 
+by elementary school. The general trend appears to be that the more desireable
+the location (as determined by elementary school), the higher the correlation
+between living area and assessed value. The exclusive enclave of Shorewood has
+the highest correlation.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots3}
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~MiddleSchool, ncol=5)
+single_fam %>%
+group_by(MiddleSchool)%>%
+summarize(COR=cor(TotalLivingArea, CurrentTotal))
+```
+
+### Multivariate Plots 3
+The correlations for middle school areas are necessarily less extreme in range,
+as we aggregate up from elementary schools.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots4}
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal), data = single_fam) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~HighSchool, ncol=4)
+single_fam %>%
+group_by(HighSchool)%>%
+summarize(COR=cor(TotalLivingArea, CurrentTotal))
+```
+
+### Multivariate Plots 4
+The highest level of aggregation shows that there are still distinct differences
+across broad parts of the city of Madison and surrounding towns, despite the 
+fact that the overall distribution is compressed.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots5}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99)) %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~HighSchool, ncol=4)
+```
+
+### Multivariate Plots 5
+The plots show the relationship between living area and assessed value with 
+outliers (below 1st percentile and above the 99th percentile) removed.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots6}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       HighSchool=='East') %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: East High School')
+```
+
+### Multivariate Plots 6
+The plot above focuses on the relationship between total living area and 
+assessed value for Madison East High School only.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots7}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       HighSchool=='West') %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: West High School')
+```
+
+### Multivariate Plots 7
+The plot above focuses on the relationship between total living area and 
+assessed value for Madison West High School only.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots8}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       HighSchool=='Lafollette') %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: Lafollette High School')
+```
+
+### Multivariate Plots 8
+The plot above focuses on the relationship between total living area and 
+assessed value for Madison Lafollete High School only.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots9}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       HighSchool=='Memorial') %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: Memorial High School')
+```
+
+### Multivariate Plots 9
+The plot above focuses on the relationship between total living area and 
+assessed value for Madison Memorial High School only.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots10}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       HighSchool=='Middleton/Cross Plains') %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: Middleton/Cross Plains High School')
+```
+
+### Multivariate Plots 10
+The plot above focuses on the relationship between total living area and 
+assessed value for Middleton/Cross Plains High School only.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots11}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       PropertyUse=='Condominium'
+       ) %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: Condominium')
+```
+
+### Multivariate Plots 11
+The plot above focuses on the relationship between total living area and 
+assessed value for condominiums only.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots12}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       PropertyUse=='Single family'
+       ) %>%
+ggplot(aes(x = TotalLivingArea, y = CurrentTotal)) + 
+  geom_jitter(alpha=1/4, shape = 21, fill = I('#F79420')) + 
+  geom_smooth(method = "lm") +
+  ggtitle('CurrentTotal by TotalLivingArea: Single Family')
+```
+
+### Multivariate Plots 12
+The plot above focuses on the relationship between total living area and 
+assessed value for Single family homes only.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the 
+### investigation. Were there features that strengthened each other in terms of 
+### looking at your feature(s) of interest?
+I was particularly interested in the relationship between house size, location, 
+and assessed value. By adding a trend line to the scatter plots, I was able to 
+find that different neighborhoods had different slopes, indicating that 
+depending on where a house was located, the relationship between size and 
+assessed value was stronger or weaker.
+### Were there any interesting or surprising interactions between features?
+In addition to the fact that different neighborhoods have different 
+relationships between house size and assessed value, different neighborhoods 
+also showed varying degrees of spread in the data. In other words, the variation 
+of assessed value conditional on house size was greater for some neighborhoods 
+than for others.
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths 
+### and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
+single_fam$Bedrooms<-as.factor(single_fam$Bedrooms)
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99),
+       as.integer(Bedrooms)>=2,
+       as.integer(Bedrooms)<=6
+       ) %>%
+  ggplot(aes(x = TotalLivingArea, y = CurrentTotal, colour=Bedrooms)) + 
+  geom_point(alpha = 0.5, size = 1, position = 'jitter') +
+  geom_smooth(method = "lm") +
+  scale_color_brewer(type = 'qual',
+    guide = guide_legend(title = 'Number of Bedrooms', reverse = T,
+    override.aes = list(alpha = 1, size = 5))) +
+  xlab("Total Living Area (sq. ft)") +
+  ylab("Total Assessed Value, Current Year ($) ") + 
+  ggtitle('CurrentTotal by TotalLivingArea and Number of Bedrooms')
+
+```
+
+### Description One
+The plot above breaks out the relationship between total living area and 
+assessed value by the number of bedrooms. We see the general increase in 
+total living area corresponds to an increasing number of bedrooms, as well
+as a much steeper relationship between total living area and assessed value
+for one bedroom homes.
+
+### Plot Two
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Two}
+single_fam %>%
+filter(CurrentTotal > 0
+       ,CurrentTotal <= quantile(CurrentTotal, 0.99) 
+       ,TotalLivingArea > 0 
+       ,TotalLivingArea <= quantile(TotalLivingArea, 0.99)
+       ,grepl("Memorial|West|East|Lafollette",as.character(HighSchool))
+       ) %>%
+  ggplot(aes(x = TotalLivingArea, y = CurrentTotal, colour=HighSchool)) + 
+  geom_point(alpha = 0.5, size = 1, position = 'jitter') +
+  geom_smooth(method = "lm") +
+  scale_color_brewer(type = 'qual',
+    guide = guide_legend(title = 'High School', reverse = T,
+    override.aes = list(alpha = 1, size = 5))) +
+  xlab("Total Living Area (sq. ft)") +
+  ylab("Total Assessed Value, Current Year ($) ") +
+  ggtitle('CurrentTotal by TotalLivingArea and High School')
+```
+
+### Description Two
+This plot shows a clear difference by high school in the assessed value, 
+conditional on total living area.
+
+### Plot Three
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Three}
+single_fam %>%
+filter(CurrentTotal > 0, 
+       CurrentTotal <= quantile(CurrentTotal, 0.99), 
+       TotalLivingArea > 0, 
+       TotalLivingArea <= quantile(TotalLivingArea, 0.99)
+       ) %>%
+  ggplot(aes(x = TotalLivingArea, y = CurrentTotal, colour=PropertyUse)) + 
+  geom_point(alpha = 0.5, size = 1, position = 'jitter') +
+  geom_smooth(method = "lm") +
+  scale_color_brewer(type = 'qual',
+    guide = guide_legend(title = 'Property Type', reverse = T,
+    override.aes = list(alpha = 1, size = 5))) +
+  scale_x_continuous() +
+  scale_y_continuous() +
+  ggtitle('CurrentTotal by TotalLivingArea and Property Type')
+```
+
+### Description Three
+The distribution for Condominiums is bifurcated in a way that you don't see for 
+single family detached homes. This reflects the changing market for condos, 
+where we see new luxury units at the high end of the value distribution, lower 
+value units, but not as much in the middle of the distribution. Overlaying the 
+scatter plots shows this clearly.
+
+
+# Reflection
+I found that cleaning and subsetting the data was the most challenging aspect 
+of this project. After an initial exploration, it was clear that the dataset 
+included property types that I was not interested in examining, as well as 
+wrinkles, such as the the fact school values were missing for properties that 
+were not in the Madison school district. Further work could focus on developing 
+an explicit model for assessed value based on the variables above.

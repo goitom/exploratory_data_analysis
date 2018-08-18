@@ -1,0 +1,2 @@
+https://stackoverflow.com/questions/20573119/check-if-data-frame-exists
+https://stackoverflow.com/questions/11761992/how-do-i-clear-only-a-few-specific-objects-from-the-workspace
